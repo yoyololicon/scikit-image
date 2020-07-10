@@ -5,9 +5,10 @@ from .._shared.utils import warn
 from ._unwrap_1d import unwrap_1d
 from ._unwrap_2d import unwrap_2d
 from ._unwrap_3d import unwrap_3d
+from ._unwrap_mcf import mcf
 
 
-def unwrap_phase(image, wrap_around=False, seed=None):
+def unwrap_phase(image, wrap_around=False, seed=None, method='fast'):
     '''Recover the original from a wrapped phase image.
 
     From an image wrapped to lie in the interval [-pi, pi), recover the
@@ -86,6 +87,12 @@ def unwrap_phase(image, wrap_around=False, seed=None):
         warn('Image has a length 1 dimension. Consider using an '
              'array of lower dimensionality to use a more efficient '
              'algorithm')
+        
+    if method not in ['fast', 'mcf']:
+        raise ValueError('Unwrapping method should be either \'mcf\' or \'fast\'')
+    if method == 'mcf' and image.ndim != 2:
+        warn('Unwrapping method \'mcf\' does not support 1D or 3D cases,'
+             'fall back to use default \'fast\' method')
 
     if np.ma.isMaskedArray(image):
         mask = np.require(np.ma.getmaskarray(image), np.uint8, ['C'])
@@ -96,12 +103,17 @@ def unwrap_phase(image, wrap_around=False, seed=None):
         np.ma.getdata(image), dtype=np.double, order='C')
     image_unwrapped = np.empty_like(image, dtype=np.double, order='C',
                                     subok=False)
+    
+    
 
     if image.ndim == 1:
         unwrap_1d(image_not_masked, image_unwrapped)
     elif image.ndim == 2:
-        unwrap_2d(image_not_masked, mask, image_unwrapped,
-                  wrap_around, seed)
+        if method == 'mcf':
+            pass
+        else:
+            unwrap_2d(image_not_masked, mask, image_unwrapped,
+                      wrap_around, seed)
     elif image.ndim == 3:
         unwrap_3d(image_not_masked, mask, image_unwrapped,
                   wrap_around, seed)
