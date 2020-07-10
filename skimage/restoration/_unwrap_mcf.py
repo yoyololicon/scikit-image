@@ -87,6 +87,7 @@ def mcf(x: np.ndarray, out: np.ndarray, weights=None, capacity=None):
     psi2 += K2 * 2 * np.pi
 
     # integrate the gradients
-    out[1:, 0] += np.cumsum(psi1[:, 0]) + x[0, 0]
+    out[0, 0] = x[0, 0]
+    out[1:, 0] += np.cumsum(psi1[:, 0]) + out[0, 0]
     out[:, 1:] = np.cumsum(psi2, axis=1) + out[:, :1]
     return
